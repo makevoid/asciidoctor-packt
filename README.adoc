@@ -1,6 +1,105 @@
 == 43
 === Writing for Packt with Asciidoctor
 
+
+=== Infos about this fork
+
+Updated by @makevoid for generation from markdown, will follow informations to script the whole process.
+
+
+This is the script I'm using
+
+----
+#!/usr/bin/env bash
+
+page=${1:-chapter_02} # I update this default var as my current chapter
+
+
+pandoc -t asciidoc -f markdown $page.md > $page.asciidoc &&
+
+ruby bin/replace_images.rb $page &&
+
+asciidoctor --trace -T ~/apps/asciidoctor-packt/slim -b packt $page.asciidoc &&
+
+sed  -i.bak s/encoding=\"\"/encoding=\"utf-8\"/g $page.fodt &&
+
+xmllint -format $page.fodt &&
+
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+  libreoffice $page.fodt
+else
+  open $page.fodt
+fi
+----
+
+
+You will need pandoc, asciidoctor, libreoffice and xmllint installed.
+
+
+This is the other script I'm using for handling the images, it's useful but completely optional:
+
+----
+# configs
+DEFAULT_ARGS = "width='100%' height='30%'"
+
+page = ARGV[0]
+@page = page
+raise "no page... exiting..." unless page
+
+page_file = File.read "#{page}.asciidoc"
+page_file = page_file.split "\n"
+
+pages = File.read "#{page}.imgz"
+pages = eval pages#.split "\n"
+
+
+def replace(line, pages: pages)
+  match = line.match /image:(.+)\[/
+  path = match[1]
+  found = match[1].sub "./#{@page}/", ''
+  args = DEFAULT_ARGS
+  argz = pages[found.to_sym]
+  args = argz if argz
+  "image::#{path}[#{args}]"
+end
+
+page_file = page_file.map do |line|
+  if line.match /^image:/
+    replace line, pages: pages
+  else
+    line
+  end
+end
+
+File.open("#{page}.asciidoc", "w") do |f|
+  f.write page_file.join "\n"
+end
+
+
+----
+
+
+And this is a sample .imgz file used by the ruby build script:
+
+----
+
+{
+  "blockchain_diagram_01.png": "width='80%' height='25%'",
+  "number_of_transactions_per_day.png": nil,
+  "estimated_usd_transaction_volume.png": nil,
+  "osx_01_install_devtools.png": nil,
+  "blockchain_01.png": "width='100%' height='42%'",
+}
+---
+
+
+Contact me for more infos and many thanks to Greg, who wrote this awesome repo and to Andrey Adamovich for telling me about the existence of it!
+
+Enjoy!
+
+
+=== Original Readme
+
 In this chapter, you'll learn:
 
 * How to create a Packt manuscript using `asciidoctor` (http://asciidoctor.org)
