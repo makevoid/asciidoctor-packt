@@ -8,4 +8,4 @@ text:p text:style-name="imageblock"
 text:p text:style-name="Layout_20_Information_20_5b_PACKT_5d_"
   - require 'pathname'
   - basename = Pathname.new(attr :target).basename
-  |[[Image: #{basename.to_s.split("_")[0]}]]
+  |[[Image: #{basename.to_s.split(".")[0]}]]
